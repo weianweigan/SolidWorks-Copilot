@@ -1,0 +1,171 @@
+﻿<Window
+    x:Class="Copilot.Sw.Views.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Copilot.Sw.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:viewmodels="clr-namespace:Copilot.Sw.ViewModels"
+    Name="window"
+    Title="Settings"
+    Width="800"
+    Height="450"
+    d:DataContext="{d:DesignInstance Type=viewmodels:SettingsWindowViewModel}"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Light" />
+                <ui:ControlsDictionary />
+                <ResourceDictionary Source="/Copilot.Sw;component/Themes/Icons.xaml" />
+                <ResourceDictionary Source="/Copilot.Sw;component/TemplateSelector/MessageTemplateSelector.xaml" />
+                <ResourceDictionary Source="/Copilot.Sw;component/Themes/Colors.xaml" />
+                <ResourceDictionary Source="/Copilot.Sw;component/Themes/Converters.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="50" />
+        </Grid.RowDefinitions>
+        <TabControl>
+            <TabItem Header="Server">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition />
+                        <RowDefinition Height="130" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            DockPanel.Dock="Left"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="LLM Server:" />
+                        <Button
+                            Margin="10,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding SetAsDefaultCommand}"
+                            Content="Set as default"
+                            DockPanel.Dock="Right" />
+                        <Button
+                            Margin="5,0"
+                            HorizontalAlignment="Right"
+                            Command="{Binding DeleteCommand}"
+                            DockPanel.Dock="Right">
+                            <ui:SymbolIcon Symbol="Delete24" />
+                        </Button>
+                        <Button
+                            HorizontalAlignment="Right"
+                            Command="{Binding AddCommand}"
+                            DockPanel.Dock="Right">
+                            <ui:SymbolIcon Symbol="Add24" />
+                        </Button>
+                    </DockPanel>
+                    <ListBox
+                        Name="TextCompletionConfigsListBox"
+                        Grid.Row="1"
+                        ItemsSource="{Binding TextCompletionConfigs}"
+                        SelectedItem="{Binding SelectedTextCompletionConfig}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon
+                                        Grid.RowSpan="2"
+                                        Symbol="Checkmark48"
+                                        Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding}" />
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Text="{Binding Apikey}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Grid Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox
+                            Margin="5,0"
+                            PlaceholderText="Name"
+                            Text="{Binding SelectedTextCompletionConfig.Name}" />
+                        <Grid Grid.Column="1" Margin="5,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="Type:" />
+                            <ComboBox
+                                Grid.Column="1"
+                                ItemsSource="{Binding SelectedTextCompletionConfig.Type, Converter={StaticResource EnumToItemsConveter}}"
+                                Text="{Binding SelectedTextCompletionConfig.Type, Converter={StaticResource EnumStringConverter}}" />
+                        </Grid>
+                        <ui:TextBox
+                            Grid.Row="1"
+                            Margin="5,0"
+                            PlaceholderText="Api key"
+                            Text="{Binding SelectedTextCompletionConfig.Apikey}" />
+                        <ui:TextBox
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="5,0"
+                            PlaceholderText="Model"
+                            Text="{Binding SelectedTextCompletionConfig.Model}" />
+                        <ui:TextBox
+                            Grid.Row="2"
+                            Margin="5,0"
+                            PlaceholderText="EndPoint"
+                            Text="{Binding SelectedTextCompletionConfig.Endpoint}" />
+                        <ui:TextBox
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Margin="5,0"
+                            PlaceholderText="OrgId"
+                            Text="{Binding SelectedTextCompletionConfig.Org}" />
+
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <Grid Grid.Row="1">
+            <ui:Button
+                Margin="0,0,120,0"
+                HorizontalAlignment="Right"
+                Appearance="Primary"
+                Command="{Binding OkCommand}"
+                CommandParameter="{Binding ElementName=window}"
+                Content="Ok(_O)"
+                Icon="Checkmark28" />
+            <ui:Button
+                Margin="5"
+                HorizontalAlignment="Right"
+                Content="Cancle(_C)"
+                IsCancel="True" />
+        </Grid>
+    </Grid>
+</Window>

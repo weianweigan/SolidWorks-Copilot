@@ -1,0 +1,10 @@
+﻿使用坐标绘制圆形
+
+[Input]
+CreateCircle:(0,0,0,5)
++++++
+CreateCircle:(1,0,0,5)
++++++
+[Input]
+CreateCircle({{$x}},{{$y}},{{$z}},{{$raduis}})
++++++

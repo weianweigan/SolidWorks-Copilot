@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CS8601: 引用类型赋值可能为 null。
+dotnet_diagnostic.CS8601.severity = suggestion
