@@ -73,10 +73,13 @@ public class CreateSketchSegmentSkillTest
         var result = await kernel.RunAsync(
             "我需要在SolidWorks草图中绘制10个直径为100的圆，竖直排列，间距10",
             skill["CreateSketchSegment"],
+            skill["CreateCircle"],
             planner["CreatePlan"]);
 
         var executionResults = result;
 
+        var planString = result.Variables.ToPlan().PlanString;
+        Console.WriteLine(planString);
         int step = 1;
         int maxSteps = 10;
         while (!executionResults.Variables.ToPlan().IsComplete && step < maxSteps)
