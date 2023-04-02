@@ -7,8 +7,18 @@ namespace Copilot.Sw.Models;
 
 public class Conversation:ObservableObject
 {
+    private string _history = "";
+
+    public Conversation()
+    {
+        Variables.Set("history", _history);
+    }
+
     public ObservableCollection<Message> Messages { get; set; } = new ();
 
+    public ContextVariables Variables { get; set; } = new();
+
+    #region Add
     internal void AddAsk(string input)
     {
         Messages.Add(Message.CreateAsk(input));
@@ -33,4 +43,11 @@ public class Conversation:ObservableObject
     {
         Messages.Add(Message.CreateAnswer(goal));
     }
+
+    internal void AddHistory(string theNewChatExchange)
+    {
+        _history += theNewChatExchange;
+        Variables.Set("history", _history);
+    }
+    #endregion
 }

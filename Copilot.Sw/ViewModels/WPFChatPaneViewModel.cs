@@ -1,27 +1,26 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Copilot.Sw.Models;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using System;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Configuration;
 using System.Threading;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.SemanticKernel.KernelExtensions;
-using System.IO;
 using System.Linq;
 using Copilot.Sw.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using Copilot.Sw.Config;
 using MvvmDialogs;
-using Microsoft.SemanticKernel.Memory;
 using Copilot.Sw.Skills.SketchSkill;
 using Copilot.Sw.Skills;
 using Microsoft.SemanticKernel.CoreSkills;
 using Microsoft.SemanticKernel.Orchestration.Extensions;
+using System.Collections.Generic;
+using Microsoft.SemanticKernel.Memory;
+using System.IO;
 
 namespace Copilot.Sw.ViewModels;
 
@@ -33,19 +32,25 @@ public partial class WPFChatPaneViewModel : ObservableObject
     private readonly ILogger? _logger;
     private readonly IAddin _addin;
     private readonly ITextCompletionProvider _textCompletionProvider;
+    private readonly ISkillsProvider _skillsProvider;
     private readonly IDialogService _dialogService;
     private bool _configLoadResult;
+    private SkillModel _selectedSkill;
     #endregion
 
     #region Ctor
     public WPFChatPaneViewModel(
         IAddin addin,
         ITextCompletionProvider textCompletionProvider,
+        ISkillsProvider skillsProvider,
         IDialogService dialogService)
     {
         _addin = addin;
         _textCompletionProvider = textCompletionProvider;
+        _skillsProvider = skillsProvider;
         _dialogService = dialogService;
+        Skills = _skillsProvider.GetSkills().ToList();
+        SelectedSkill = Skills.FirstOrDefault();
         //_logger = logger;
     }
     #endregion
@@ -60,6 +65,8 @@ public partial class WPFChatPaneViewModel : ObservableObject
         }
     }
 
+    public List<SkillModel> Skills { get; set; }
+
     public Conversation Conversation { get; set; } = new();
 
     public IKernel? Kernel { get; private set; }
@@ -67,36 +74,52 @@ public partial class WPFChatPaneViewModel : ObservableObject
     public bool HasItem => Conversation?.Messages?.Any() == true;
 
     public AsyncRelayCommand SendCommand { get => _sendCommand ??= new AsyncRelayCommand(SendAsync, CanSend); }
+
+    public SkillModel SelectedSkill { get => _selectedSkill; set => SetProperty(ref _selectedSkill, value); }
     #endregion
 
     #region Public Methods
     public void Init()
     {
-        Kernel = Microsoft.SemanticKernel.Kernel.Builder
-            //.WithMemoryStorage(new VolatileMemoryStore())
-            //.WithLogger(_logger)
-            .Build();
-        _configLoadResult = LoadConfigs();
+        BuildKernel();
     }
 
-    private bool LoadConfigs()
+    private void BuildKernel()
+    {
+        Kernel = Microsoft.SemanticKernel.Kernel.Builder
+            .Configure(c =>
+            {
+                LoadConfigs(c);
+            })
+            .WithMemoryStorage(new VolatileMemoryStore())
+            .Build();
+    }
+
+    private bool LoadConfigs(KernelConfig kernelConfig)
     {
         var configs = _textCompletionProvider.Load();
 
         if (configs?.Any() != true)
         {
-            return false;
+            return _configLoadResult = false;
         }
 
-        Kernel.Config.RemoveAllTextCompletionServices();
+        kernelConfig.RemoveAllTextCompletionServices();
+        kernelConfig.RemoveAllTextEmbeddingServices();
         foreach (var config in configs)
         {
             if (config.Type == ServerType.OpenAI)
             {
-                Kernel.Config.AddOpenAITextCompletion(
+                kernelConfig.AddOpenAITextCompletion(
                     config.Name,                       // alias used in the prompt templates' config.json
                     config.Model,                     // OpenAI Model Name
                     config.Apikey,            // OpenAI API key
+                    config.Org
+                    );
+                kernelConfig.AddOpenAIEmbeddingGeneration(
+                    config.Name,
+                    "text-embedding-ada-002",
+                    config.Apikey,
                     config.Org
                     );
             }
@@ -110,9 +133,9 @@ public partial class WPFChatPaneViewModel : ObservableObject
                     );
             }
         }
-        Kernel.Config.SetDefaultTextCompletionService(configs.First().Name);
+        kernelConfig.SetDefaultTextCompletionService(configs.First().Name);
 
-        return true;
+        return _configLoadResult = true;
     }
     #endregion
 
@@ -140,7 +163,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
                 settingWindow.Save();
             }
 
-            _configLoadResult = LoadConfigs();
+            BuildKernel();
         }
         catch (Exception ex)
         {
@@ -167,6 +190,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
 
             //copy question
             var question = _question;
+            Conversation.Variables.Set("input", question);
 
             //clear
             Question = "";
@@ -178,59 +202,62 @@ public partial class WPFChatPaneViewModel : ObservableObject
             OnPropertyChanged(nameof(HasItem));
 
             ////use skill
-            //var skillDir = Path.Combine(_addin.AddinDirectory, "Skills");
-            //var skill = Kernel.ImportSemanticSkillFromDirectory(skillDir, "QASkill");
+            var skill = Kernel.ImportSemanticSkillFromDirectory(_skillsProvider.SkillsLocation, SelectedSkill.Name);
 
-            ////send
-            //var result = await Kernel.RunAsync(
-            //    input: question,
-            //    cancellationToken: cancellationToken,
-            //    skill["Question"]
-            //    );
-
-            var planner = Kernel.ImportSkill(new PlannerSkill(Kernel));
-
-            var skill = Kernel.ImportSemanticSkillFromDirectory(
-                new SkillsProvider().SkillsLocation,
-                "SketchSkill");
-            Kernel.ImportSkill(new SketchSegmentCreationSkill());
-
+            //send
             var result = await Kernel.RunAsync(
-                question,
-                skill["CreateSketchSegment"],
-                planner["CreatePlan"]);
+                Conversation.Variables,
+                cancellationToken: cancellationToken,
+                skill[SelectedSkill.SemanticFunctions.First().Name]
+                );
 
-            var executionResults = result;
+            //update history
+            var theNewChatExchange = $"Me: {question}\nAI:{result}\n";
+            Conversation.AddHistory(theNewChatExchange);
 
-            int step = 1;
-            int maxSteps = 10;
-            while (!executionResults.Variables.ToPlan().IsComplete && step < maxSteps)
-            {
-                var results = await Kernel.RunAsync(executionResults.Variables, planner["ExecutePlan"]);
-                if (results.Variables.ToPlan().IsSuccessful)
-                {
-                    Console.WriteLine($"Step {step} - Execution results:\n");
-                    Console.WriteLine(results.Variables.ToPlan().PlanString);
+            //var planner = Kernel.ImportSkill(new PlannerSkill(Kernel));
 
-                    if (results.Variables.ToPlan().IsComplete)
-                    {
-                        Console.WriteLine($"Step {step} - COMPLETE!");
-                        Console.WriteLine(results.Variables.ToPlan().Result);
-                        break;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Step {step} - Execution failed:");
-                    Console.WriteLine(results.Variables.ToPlan().Result);
-                    break;
-                }
+            //var skill = Kernel.ImportSemanticSkillFromDirectory(
+            //    new SkillsProvider().SkillsLocation,
+            //    "SketchSkill");
+            //Kernel.ImportSkill(new SketchSegmentCreationSkill());
 
-                executionResults = results;
-                step++;
-                Console.WriteLine("");
-            }
-            Console.WriteLine(result.Variables.ToPlan().PlanString);            
+            //var result = await Kernel.RunAsync(
+            //    question,
+            //    skill["CreateSketchSegment"],
+            //    planner["CreatePlan"]);
+
+            //var executionResults = result;
+
+            //int step = 1;
+            //int maxSteps = 10;
+            //while (!executionResults.Variables.ToPlan().IsComplete && step < maxSteps)
+            //{
+            //    var results = await Kernel.RunAsync(executionResults.Variables, planner["ExecutePlan"]);
+            //    if (results.Variables.ToPlan().IsSuccessful)
+            //    {
+            //        Console.WriteLine($"Step {step} - Execution results:\n");
+            //        Console.WriteLine(results.Variables.ToPlan().PlanString);
+
+            //        if (results.Variables.ToPlan().IsComplete)
+            //        {
+            //            Console.WriteLine($"Step {step} - COMPLETE!");
+            //            Console.WriteLine(results.Variables.ToPlan().Result);
+            //            break;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        Console.WriteLine($"Step {step} - Execution failed:");
+            //        Console.WriteLine(results.Variables.ToPlan().Result);
+            //        break;
+            //    }
+
+            //    executionResults = results;
+            //    step++;
+            //    Console.WriteLine("");
+            //}
+            //Console.WriteLine(result.Variables.ToPlan().PlanString);            
 
             //check error
             if (result.ErrorOccurred)
@@ -239,7 +266,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
             }
 
             //response
-            Conversation.AddAnswer(result.Variables.ToPlan().Goal);
+            Conversation.AddAnswer(result);
         }
         catch (Exception ex)
         {

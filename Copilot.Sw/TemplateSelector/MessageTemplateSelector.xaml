@@ -14,17 +14,9 @@
                     Margin="5,10"
                     Padding="5"
                     Background="White"
+                    BorderBrush="#19000000"
+                    BorderThickness="1"
                     CornerRadius="12">
-                    <Border.Effect>
-                        <DropShadowEffect
-                            x:Name="OG"
-                            BlurRadius="11"
-                            Direction="50"
-                            Opacity="0.2"
-                            RenderingBias="Performance"
-                            ShadowDepth="1"
-                            Color="Gray" />
-                    </Border.Effect>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition />
@@ -53,17 +45,9 @@
                     Margin="5,10"
                     Padding="5"
                     Background="White"
+                    BorderBrush="#19000000"
+                    BorderThickness="1"
                     CornerRadius="12">
-                    <Border.Effect>
-                        <DropShadowEffect
-                            x:Name="OG"
-                            BlurRadius="11"
-                            Direction="50"
-                            Opacity="0.2"
-                            RenderingBias="Performance"
-                            ShadowDepth="1"
-                            Color="Gray" />
-                    </Border.Effect>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="32" />
@@ -86,7 +70,12 @@
         </templateSelector:MessageTemplateSelector.AnswerDataTemplate>
         <templateSelector:MessageTemplateSelector.ErrorDataTemplate>
             <DataTemplate DataType="model:ErrorMessage">
-                <Border Margin="5" CornerRadius="5">
+                <Border
+                    Margin="5"
+                    Background="Red"
+                    BorderBrush="#19000000"
+                    BorderThickness="1"
+                    CornerRadius="5">
                     <TextBlock Foreground="Red" Text="{Binding Content}" />
                 </Border>
             </DataTemplate>
