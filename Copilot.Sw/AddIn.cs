@@ -6,13 +6,17 @@ using Copilot.Sw.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using MvvmDialogs;
 using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Xarial.XCad.Base.Attributes;
+using Xarial.XCad.Base.Enums;
 using Xarial.XCad.SolidWorks;
+using Xarial.XCad.UI.Commands;
+
 
 [ComVisible(true)]
 [Guid("9F9212BF-6856-4078-AE4E-F5CD5774DD71")]
@@ -42,6 +46,8 @@ public class AddIn : SwAddInEx,IAddin
         Ioc.Default.ConfigureServices(ConfigureCopilotServices());
         
         var pane = CreateTaskPane<WPFChatPane>();
+
+        CommandManager.AddContextMenu<ContextCommands>(SelectType_e.Everything).CommandClick += AddIn_CommandClick; ;
     }
 
     public override void OnDisconnect()
@@ -51,6 +57,11 @@ public class AddIn : SwAddInEx,IAddin
     #endregion
 
     #region Private Methods
+    private void AddIn_CommandClick(ContextCommands spec)
+    {
+
+    }
+
     private IServiceProvider ConfigureCopilotServices()
     {
         var services = new ServiceCollection();

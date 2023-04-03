@@ -22,7 +22,7 @@ public class SkillModel
             .Where(f => Path.GetFileNameWithoutExtension(f).EndsWith("skprompt"));
 
         SemanticFunctions = files
-            .Select(p => new LocalSemanticFunctionModel(p,Name))
+            .Select(p => new LocalSemanticFunctionModel(p,Name,skillDir))
             .ToList();
     }
 

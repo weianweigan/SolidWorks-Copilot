@@ -21,6 +21,7 @@ using Microsoft.SemanticKernel.Orchestration.Extensions;
 using System.Collections.Generic;
 using Microsoft.SemanticKernel.Memory;
 using System.IO;
+using Copilot.Sw.Skills.SolidWorksSkill;
 
 namespace Copilot.Sw.ViewModels;
 
@@ -35,7 +36,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
     private readonly ISkillsProvider _skillsProvider;
     private readonly IDialogService _dialogService;
     private bool _configLoadResult;
-    private SkillModel _selectedSkill;
+    private LocalSemanticFunctionModel _selectedSkill;
     #endregion
 
     #region Ctor
@@ -49,8 +50,10 @@ public partial class WPFChatPaneViewModel : ObservableObject
         _textCompletionProvider = textCompletionProvider;
         _skillsProvider = skillsProvider;
         _dialogService = dialogService;
-        Skills = _skillsProvider.GetSkills().ToList();
-        SelectedSkill = Skills.FirstOrDefault();
+        Skills = _skillsProvider.GetSkills()
+            .SelectMany(p => p.SemanticFunctions)
+            .ToList();
+        SelectedSkill = Skills.FirstOrDefault(p => p.Name == "TalkWithSolidWorks");
         //_logger = logger;
     }
     #endregion
@@ -65,7 +68,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
         }
     }
 
-    public List<SkillModel> Skills { get; set; }
+    public List<LocalSemanticFunctionModel> Skills { get; set; }
 
     public Conversation Conversation { get; set; } = new();
 
@@ -75,7 +78,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
 
     public AsyncRelayCommand SendCommand { get => _sendCommand ??= new AsyncRelayCommand(SendAsync, CanSend); }
 
-    public SkillModel SelectedSkill { get => _selectedSkill; set => SetProperty(ref _selectedSkill, value); }
+    public LocalSemanticFunctionModel SelectedSkill { get => _selectedSkill; set => SetProperty(ref _selectedSkill, value); }
     #endregion
 
     #region Public Methods
@@ -202,71 +205,46 @@ public partial class WPFChatPaneViewModel : ObservableObject
             OnPropertyChanged(nameof(HasItem));
 
             ////use skill
-            var skill = Kernel.ImportSemanticSkillFromDirectory(_skillsProvider.SkillsLocation, SelectedSkill.Name);
+            var skill = Kernel.ImportSemanticSkillFromDirectory(_skillsProvider.SkillsLocation, new DirectoryInfo(SelectedSkill.SkillDir).Name);
 
             //send
             var result = await Kernel.RunAsync(
                 Conversation.Variables,
                 cancellationToken: cancellationToken,
-                skill[SelectedSkill.SemanticFunctions.First().Name]
+                skill[SelectedSkill.Name]
                 );
 
             //update history
             var theNewChatExchange = $"Me: {question}\nAI:{result}\n";
             Conversation.AddHistory(theNewChatExchange);
 
-            //var planner = Kernel.ImportSkill(new PlannerSkill(Kernel));
-
-            //var skill = Kernel.ImportSemanticSkillFromDirectory(
-            //    new SkillsProvider().SkillsLocation,
-            //    "SketchSkill");
-            //Kernel.ImportSkill(new SketchSegmentCreationSkill());
-
-            //var result = await Kernel.RunAsync(
-            //    question,
-            //    skill["CreateSketchSegment"],
-            //    planner["CreatePlan"]);
-
-            //var executionResults = result;
-
-            //int step = 1;
-            //int maxSteps = 10;
-            //while (!executionResults.Variables.ToPlan().IsComplete && step < maxSteps)
-            //{
-            //    var results = await Kernel.RunAsync(executionResults.Variables, planner["ExecutePlan"]);
-            //    if (results.Variables.ToPlan().IsSuccessful)
-            //    {
-            //        Console.WriteLine($"Step {step} - Execution results:\n");
-            //        Console.WriteLine(results.Variables.ToPlan().PlanString);
-
-            //        if (results.Variables.ToPlan().IsComplete)
-            //        {
-            //            Console.WriteLine($"Step {step} - COMPLETE!");
-            //            Console.WriteLine(results.Variables.ToPlan().Result);
-            //            break;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine($"Step {step} - Execution failed:");
-            //        Console.WriteLine(results.Variables.ToPlan().Result);
-            //        break;
-            //    }
-
-            //    executionResults = results;
-            //    step++;
-            //    Console.WriteLine("");
-            //}
-            //Console.WriteLine(result.Variables.ToPlan().PlanString);            
-
             //check error
             if (result.ErrorOccurred)
             {
                 Conversation.AddError(result);
+                return;
             }
 
-            //response
-            Conversation.AddAnswer(result);
+            if (int.TryParse(result.ToString(),out var skillIndex))
+            {
+                //try to planner
+                var planner = Kernel.ImportSkill(new PlannerSkill(Kernel));
+
+                Kernel.ImportSkill(new SketchSegmentCreationSkill());
+                Kernel.ImportSkill(new DocumentCreatationSkill());
+
+                var planResult = await Kernel.RunAsync(
+                    question,
+                    planner["CreatePlan"]);
+
+                var plan = planResult.Variables.ToPlan();
+                Conversation.Messages.Add(Message.CreatePlan(plan));
+            }
+            else
+            {
+                //response
+                Conversation.AddAnswer(result);
+            }
         }
         catch (Exception ex)
         {

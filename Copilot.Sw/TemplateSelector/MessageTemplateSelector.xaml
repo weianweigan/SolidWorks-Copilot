@@ -72,7 +72,6 @@
             <DataTemplate DataType="model:ErrorMessage">
                 <Border
                     Margin="5"
-                    Background="Red"
                     BorderBrush="#19000000"
                     BorderThickness="1"
                     CornerRadius="5">

@@ -9,10 +9,11 @@ namespace Copilot.Sw.Models;
 /// </summary>
 public class LocalSemanticFunctionModel
 {
-    public LocalSemanticFunctionModel(string pathName,string category = "")
+    public LocalSemanticFunctionModel(string pathName,string category, string skillDir)
     {
         PathName = pathName;
         Category = category;
+        SkillDir = skillDir;
         Name = new DirectoryInfo(Path.GetDirectoryName(pathName)).Name;
 
         var configFile = Path.Combine(
@@ -51,6 +52,11 @@ public class LocalSemanticFunctionModel
     /// Skill Name
     /// </summary>
     public string Category { get; }
+
+    /// <summary>
+    /// Skill dir
+    /// </summary>
+    public string SkillDir { get; }
     #endregion
 
     public override string ToString() => Name;

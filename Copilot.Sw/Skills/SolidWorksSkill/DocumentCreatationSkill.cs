@@ -4,12 +4,24 @@ namespace Copilot.Sw.Skills.SolidWorksSkill;
 
 public class DocumentCreatationSkill:SldWorksSkillContext
 {
-    [SKFunction("Create SolidWorks Document")]
-    [SKFunctionName(nameof(DocumentCreatationSkill))]
-    public string CreateSolidWorksDocument(string type)
+    [SKFunction("Create a solidworks's part doucment")]
+    [SKFunctionName(nameof(CreatePart))]
+    public void CreatePart()
     {
-        
 
-        return string.Empty;
+    }
+
+    [SKFunction("Create a solidworks's assembly doucment")]
+    [SKFunctionName(nameof(CreateAssembly))]
+    public void CreateAssembly()
+    {
+
+    }
+
+    [SKFunction("Create a solidworks's drawing doucment")]
+    [SKFunctionName(nameof(CreateDrawing))]
+    public void CreateDrawing()
+    {
+
     }
 }

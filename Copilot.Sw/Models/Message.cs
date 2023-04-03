@@ -25,4 +25,14 @@ public abstract partial class Message: ObservableObject
     {
         return new AskMessage() { Content = input };
     }
+
+    internal static Message CreatePlan(Microsoft.SemanticKernel.Planning.Plan plan)
+    {
+        return new PlaneMessage() { Content = plan.ToJson() };
+    }
+}
+
+public class PlaneMessage : Message
+{
+    public override MessageType MessageType => MessageType.Answer;
 }

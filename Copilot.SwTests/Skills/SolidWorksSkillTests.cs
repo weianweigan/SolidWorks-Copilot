@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel.KernelExtensions;
+﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.KernelExtensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Copilot.SwTests.Skills;
