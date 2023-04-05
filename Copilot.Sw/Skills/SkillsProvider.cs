@@ -17,6 +17,11 @@ public class SkillsProvider : ISkillsProvider
             "Skills");
     }
 
+    public SkillsProvider(string skilldir)
+    {
+        SkillsLocation = skilldir;
+    }
+
     public IEnumerable<SkillModel> GetSkills()
     {
         if (!Directory.Exists(SkillsLocation))
@@ -27,9 +32,12 @@ public class SkillsProvider : ISkillsProvider
         var skillDirs = Directory.GetDirectories(SkillsLocation)
             .Where(p => p.EndsWith("Skill"));
 
+        int index = 1;
         foreach (var dir in skillDirs)
         {
-            yield return new SkillModel(dir);
+            var model = new SkillModel(dir);
+            model.Index = 1;
+            yield return model;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace Copilot.Sw.Models;
 
@@ -24,6 +25,12 @@ public class SkillModel
         SemanticFunctions = files
             .Select(p => new LocalSemanticFunctionModel(p,Name,skillDir))
             .ToList();
+
+        var configPathName = Path.Combine(skillDir, "config.json");
+        if (File.Exists(configPathName))
+        {
+            Config = JsonSerializer.Deserialize<SkillConfigModel>(File.ReadAllText(configPathName));
+        }
     }
 
     #region Properties
@@ -43,6 +50,19 @@ public class SkillModel
     /// Skill Description
     /// </summary>
     public string? Description { get; }
+
+    /// <summary>
+    /// Config file for this skill dir.
+    /// </summary>
+    /// <remarks>
+    /// Only for solidworks related skill
+    /// </remarks>
+    public SkillConfigModel? Config { get; }
+
+    /// <summary>
+    /// index when loop
+    /// </summary>
+    public int Index { get; internal set; }
     #endregion
 
     public override string ToString() => Name;

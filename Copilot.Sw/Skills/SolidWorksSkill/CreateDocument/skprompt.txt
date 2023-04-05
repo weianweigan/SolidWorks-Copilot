@@ -1,7 +1,1 @@
-classify text as part assembly or drawing
-Text:NewPart¡£
-Action:Part
-Text:Create a Assembly¡£
-Action:Assembly
-Text:{{$input}}
-Action:
+You are a solidworks task selector

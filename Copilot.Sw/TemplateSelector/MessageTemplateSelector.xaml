@@ -68,6 +68,52 @@
                 </Border>
             </DataTemplate>
         </templateSelector:MessageTemplateSelector.AnswerDataTemplate>
+        <templateSelector:MessageTemplateSelector.ActionAnswerDataTemplate>
+            <DataTemplate DataType="model:ActionAnswerMessage">
+                <Border
+                    Margin="5,10"
+                    Padding="5"
+                    Background="White"
+                    BorderBrush="#19000000"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock
+                            Grid.Column="1"
+                            Margin="10,2"
+                            FontSize="14"
+                            Text="{Binding Content}"
+                            TextWrapping="Wrap" />
+                        <Image
+                            Width="28"
+                            Height="28"
+                            VerticalAlignment="Top"
+                            Source="{StaticResource CopilotDrawingImage}" />
+                        <TreeView
+                            Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            ItemsSource="{Binding PlanModel.ExecuteSkills}">
+                            <TreeView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        Foreground="Black"
+                                        Text="{Binding SkillName}"
+                                        ToolTip="{Binding Description}" />
+                                </DataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </templateSelector:MessageTemplateSelector.ActionAnswerDataTemplate>
         <templateSelector:MessageTemplateSelector.ErrorDataTemplate>
             <DataTemplate DataType="model:ErrorMessage">
                 <Border

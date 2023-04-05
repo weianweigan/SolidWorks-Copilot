@@ -1,0 +1,7 @@
+{
+  "Name": "Sketch",
+  "Rule": "Draw primitives in the sketch, including lines, circles, arcs, ellipses, slots, splines, etc.",
+  "Samples": [
+    "Input:Draw two circles with a radius of 10, horizontally aligned.\r\nOutput: <Skills><Skill Goal=\"Draw two circles with a radius of 10, horizontally aligned.\" SkillName=\"Sketch\"></Skills>"
+  ]
+}

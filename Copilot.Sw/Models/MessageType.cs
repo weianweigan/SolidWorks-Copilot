@@ -4,5 +4,6 @@ public enum MessageType
 {
     Ask,
     Answer,
+    ActionMessage,
     Error,
 }

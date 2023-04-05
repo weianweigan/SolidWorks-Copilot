@@ -17,6 +17,7 @@ public class MessageTemplateSelector : DataTemplateSelector
                 MessageType.Answer => AnswerDataTemplate,
                 MessageType.Ask => AskDataTemplate,
                 MessageType.Error => ErrorDataTemplate,
+                MessageType.ActionMessage => ActionAnswerDataTemplate,
                 _ => null
             };
         }
@@ -25,6 +26,8 @@ public class MessageTemplateSelector : DataTemplateSelector
     }
 
     public DataTemplate? AnswerDataTemplate { get; set; }
+
+    public DataTemplate? ActionAnswerDataTemplate { get; set; }
 
     public DataTemplate? AskDataTemplate { get; set; }
 

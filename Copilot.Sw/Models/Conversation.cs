@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Copilot.Sw.Utils;
 using Microsoft.SemanticKernel.Orchestration;
 using System;
 using System.Collections.ObjectModel;
@@ -26,7 +27,7 @@ public class Conversation:ObservableObject
 
     internal void AddAnswer(SKContext result)
     {
-        Messages.Add(Message.CreateAnswer(result.Result));
+        Messages.Add(Message.CreateAnswer(SkillsParse.Parse(result.Result).Item2));
     }
 
     internal void AddError(SKContext result)

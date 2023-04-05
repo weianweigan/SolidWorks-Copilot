@@ -41,10 +41,10 @@
                 DockPanel.Dock="Right">
                 <ui:SymbolIcon Symbol="Settings28" />
             </Button>
-            <ComboBox
+            <!--<ComboBox
                 Margin="5,0"
                 ItemsSource="{Binding Skills}"
-                SelectedItem="{Binding SelectedSkill}" />
+                SelectedItem="{Binding SelectedSkill}" />-->
         </DockPanel>
         <DockPanel Grid.Row="1" LastChildFill="True">
             <Border

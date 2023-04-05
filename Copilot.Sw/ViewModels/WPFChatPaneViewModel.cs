@@ -14,14 +14,11 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using Copilot.Sw.Config;
 using MvvmDialogs;
-using Copilot.Sw.Skills.SketchSkill;
 using Copilot.Sw.Skills;
-using Microsoft.SemanticKernel.CoreSkills;
-using Microsoft.SemanticKernel.Orchestration.Extensions;
 using System.Collections.Generic;
 using Microsoft.SemanticKernel.Memory;
-using System.IO;
-using Copilot.Sw.Skills.SolidWorksSkill;
+using Copilot.Sw.Extensions;
+using Microsoft.SemanticKernel.CoreSkills;
 
 namespace Copilot.Sw.ViewModels;
 
@@ -34,7 +31,6 @@ public partial class WPFChatPaneViewModel : ObservableObject
     private readonly IAddin _addin;
     private readonly ITextCompletionProvider _textCompletionProvider;
     private readonly ISkillsProvider _skillsProvider;
-    private readonly IDialogService _dialogService;
     private bool _configLoadResult;
     private LocalSemanticFunctionModel _selectedSkill;
     #endregion
@@ -43,17 +39,14 @@ public partial class WPFChatPaneViewModel : ObservableObject
     public WPFChatPaneViewModel(
         IAddin addin,
         ITextCompletionProvider textCompletionProvider,
-        ISkillsProvider skillsProvider,
-        IDialogService dialogService)
+        ISkillsProvider skillsProvider)
     {
         _addin = addin;
         _textCompletionProvider = textCompletionProvider;
         _skillsProvider = skillsProvider;
-        _dialogService = dialogService;
         Skills = _skillsProvider.GetSkills()
             .SelectMany(p => p.SemanticFunctions)
             .ToList();
-        SelectedSkill = Skills.FirstOrDefault(p => p.Name == "TalkWithSolidWorks");
         //_logger = logger;
     }
     #endregion
@@ -77,8 +70,6 @@ public partial class WPFChatPaneViewModel : ObservableObject
     public bool HasItem => Conversation?.Messages?.Any() == true;
 
     public AsyncRelayCommand SendCommand { get => _sendCommand ??= new AsyncRelayCommand(SendAsync, CanSend); }
-
-    public LocalSemanticFunctionModel SelectedSkill { get => _selectedSkill; set => SetProperty(ref _selectedSkill, value); }
     #endregion
 
     #region Public Methods
@@ -89,56 +80,23 @@ public partial class WPFChatPaneViewModel : ObservableObject
 
     private void BuildKernel()
     {
-        Kernel = Microsoft.SemanticKernel.Kernel.Builder
-            .Configure(c =>
-            {
-                LoadConfigs(c);
-            })
-            .WithMemoryStorage(new VolatileMemoryStore())
-            .Build();
-    }
-
-    private bool LoadConfigs(KernelConfig kernelConfig)
-    {
         var configs = _textCompletionProvider.Load();
 
         if (configs?.Any() != true)
         {
-            return _configLoadResult = false;
+            _configLoadResult = false;
+            return;
         }
 
-        kernelConfig.RemoveAllTextCompletionServices();
-        kernelConfig.RemoveAllTextEmbeddingServices();
-        foreach (var config in configs)
-        {
-            if (config.Type == ServerType.OpenAI)
+        Kernel = Microsoft.SemanticKernel.Kernel.Builder
+            .Configure(c =>
             {
-                kernelConfig.AddOpenAITextCompletion(
-                    config.Name,                       // alias used in the prompt templates' config.json
-                    config.Model,                     // OpenAI Model Name
-                    config.Apikey,            // OpenAI API key
-                    config.Org
-                    );
-                kernelConfig.AddOpenAIEmbeddingGeneration(
-                    config.Name,
-                    "text-embedding-ada-002",
-                    config.Apikey,
-                    config.Org
-                    );
-            }
-            else if (config.Type == ServerType.Azure)
-            {
-                Kernel.Config.AddAzureOpenAITextCompletion(
-                    config.Name,
-                    config.Model,
-                    config.Apikey,
-                    config.Org
-                    );
-            }
-        }
-        kernelConfig.SetDefaultTextCompletionService(configs.First().Name);
+                c.LoadConfigs(configs);
+            })
+            .WithMemoryStorage(new VolatileMemoryStore())
+            .Build();
 
-        return _configLoadResult = true;
+        _configLoadResult = Kernel.Config.AllTextCompletionServices?.Any() == true;
     }
     #endregion
 
@@ -204,19 +162,15 @@ public partial class WPFChatPaneViewModel : ObservableObject
             //hidden shortitem
             OnPropertyChanged(nameof(HasItem));
 
-            ////use skill
-            var skill = Kernel.ImportSemanticSkillFromDirectory(_skillsProvider.SkillsLocation, new DirectoryInfo(SelectedSkill.SkillDir).Name);
+            var plan = new SolidWorksPlanSkill(Kernel,_skillsProvider);            
+            var skills = Kernel.ImportSkill(plan);
 
             //send
             var result = await Kernel.RunAsync(
                 Conversation.Variables,
                 cancellationToken: cancellationToken,
-                skill[SelectedSkill.Name]
+                skills[SolidWorksPlanSkill.Parameters.ChatWithSolidWorks]
                 );
-
-            //update history
-            var theNewChatExchange = $"Me: {question}\nAI:{result}\n";
-            Conversation.AddHistory(theNewChatExchange);
 
             //check error
             if (result.ErrorOccurred)
@@ -225,20 +179,15 @@ public partial class WPFChatPaneViewModel : ObservableObject
                 return;
             }
 
-            if (int.TryParse(result.ToString(),out var skillIndex))
+            //update history
+            var theNewChatExchange = $"Me: {question}\nAI:{result}\n";
+            Conversation.AddHistory(theNewChatExchange);
+
+            if (result.Variables.Get("Plan",out var planValue)
+                && SwPlanModel.TryParse(planValue,out var planModel))
             {
-                //try to planner
-                var planner = Kernel.ImportSkill(new PlannerSkill(Kernel));
-
-                Kernel.ImportSkill(new SketchSegmentCreationSkill());
-                Kernel.ImportSkill(new DocumentCreatationSkill());
-
-                var planResult = await Kernel.RunAsync(
-                    question,
-                    planner["CreatePlan"]);
-
-                var plan = planResult.Variables.ToPlan();
-                Conversation.Messages.Add(Message.CreatePlan(plan));
+                var actionMessage = new ActionAnswerMessage(planModel);
+                Conversation.Messages.Add(actionMessage);
             }
             else
             {

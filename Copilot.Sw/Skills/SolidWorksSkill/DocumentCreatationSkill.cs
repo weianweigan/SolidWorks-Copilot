@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel.SkillDefinition;
+﻿using Microsoft.SemanticKernel.Orchestration;
+using Microsoft.SemanticKernel.SkillDefinition;
 
 namespace Copilot.Sw.Skills.SolidWorksSkill;
 
@@ -21,6 +22,11 @@ public class DocumentCreatationSkill:SldWorksSkillContext
     [SKFunction("Create a solidworks's drawing doucment")]
     [SKFunctionName(nameof(CreateDrawing))]
     public void CreateDrawing()
+    {
+
+    }
+
+    public void Setting(SKContext context)
     {
 
     }

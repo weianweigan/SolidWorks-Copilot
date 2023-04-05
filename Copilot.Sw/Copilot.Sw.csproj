@@ -47,10 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Skills\QASkill\Question\config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Skills\QASkill\Question\skprompt.txt">
+    <None Update="Skills\SketchSkill\CreateCircle\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Skills\SketchSkill\CreateCircle\skprompt.txt">
@@ -60,9 +57,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Skills\SolidWorksSkill\CreateDocument\skprompt.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Skills\GeneralSkill\TalkWithSolidWorks\skprompt.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
