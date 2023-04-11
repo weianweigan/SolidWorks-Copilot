@@ -22,6 +22,10 @@ public partial class QuickChatPaneViewModel : WPFChatPaneViewModel
     [RelayCommand]
     private void Exit()
     {
+        if (SendCommand.IsRunning)
+        {
+            SendCommand.Cancel();
+        }
         CloseAction?.Invoke();
     }
 }

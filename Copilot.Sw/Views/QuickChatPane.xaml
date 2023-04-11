@@ -9,12 +9,13 @@
     xmlns:viewmodels="clr-namespace:Copilot.Sw.ViewModels"
     Title="QuickChatPane"
     Width="600"
-    Height="70"
     d:DataContext="{d:DesignInstance Type=viewmodels:QuickChatPaneViewModel}"
+    d:MinHeight="70"
     FocusManager.FocusedElement="{Binding ElementName=Input}"
     ResizeMode="NoResize"
     ShowActivated="True"
     ShowInTaskbar="False"
+    SizeToContent="Height"
     SnapsToDevicePixels="True"
     Visibility="{Binding Visibility}"
     WindowStartupLocation="Manual"
@@ -62,7 +63,7 @@
                 Name="SkillsToggleBtn"
                 Margin="0,5"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Center"
+                VerticalAlignment="Bottom"
                 ToolTip="Skills">
                 <ui:SymbolIcon Symbol="List24" />
             </ToggleButton>
@@ -70,17 +71,18 @@
                 Margin="5,10"
                 AllowsTransparency="True"
                 IsOpen="{Binding ElementName=SkillsToggleBtn, Path=IsChecked}"
-                Placement="Top"
+                Placement="Left"
                 PlacementTarget="{Binding ElementName=SkillsToggleBtn}"
                 PopupAnimation="Fade"
                 StaysOpen="False">
                 <Border
+                    Margin="10"
                     Background="White"
                     BorderBrush="#19000000"
                     BorderThickness="1"
                     CornerRadius="5">
                     <ListBox
-                        Margin="10"
+                        Margin="5"
                         ItemsSource="{Binding Skills}"
                         SelectedItem="{Binding SelectedSkill}" />
                 </Border>
@@ -88,6 +90,7 @@
             <TextBox
                 x:Name="Input"
                 Grid.Column="1"
+                Margin="0,2,0,0"
                 AcceptsReturn="True"
                 Style="{DynamicResource DefaultTextBoxStyle}"
                 Text="{Binding Question, UpdateSourceTrigger=PropertyChanged}"
@@ -103,7 +106,7 @@
                 Grid.Column="2"
                 Margin="0,5"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Center"
+                VerticalAlignment="Bottom"
                 Command="{Binding SendCommand}"
                 ToolTip="Send">
                 <ui:SymbolIcon Symbol="Send20" />
