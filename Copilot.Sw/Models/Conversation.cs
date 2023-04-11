@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Copilot.Sw.Utils;
+using Copilot.Sw.Skills;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
-using System;
 using System.Collections.ObjectModel;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Copilot.Sw.Models;
 
@@ -19,32 +21,55 @@ public class Conversation:ObservableObject
 
     public ContextVariables Variables { get; set; } = new();
 
+    #region Chat
+    public async Task ChatAsync(
+        IKernel kernel,
+        ISkillsProvider skillsProvider,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        Variables.Set("input", question);
+
+        Messages.Add(Message.CreateAsk(question));
+
+        //Create a SwPlan skill
+        var plan = new SolidWorksPlanSkill(kernel, skillsProvider);
+        var skills = kernel.ImportSkill(plan);
+
+        //send
+        var result = await kernel.RunAsync(
+            Variables,
+            cancellationToken: cancellationToken,
+            skills[SolidWorksPlanSkill.Parameters.ChatWithSolidWorks]
+            );
+
+        //check error
+        if (result.ErrorOccurred)
+        {
+            Messages.Add(Message.CreateError(result.LastErrorDescription));
+            return;
+        }
+
+        //update history
+        var theNewChatExchange = $"Me: {question}\nAI:{result}\n";
+        AddHistory(theNewChatExchange);
+
+        if (result.Variables.Get("Plan", out var planValue)
+            && SwPlanModel.TryParse(planValue, out var planModel))
+        {
+            //plan
+            var actionMessage = new ActionAnswerMessage(planModel);
+            Messages.Add(actionMessage);
+        }
+        else
+        {
+            //normal response
+            Messages.Add(Message.CreateAnswer(result.ToString()));
+        }
+    }
+    #endregion
+
     #region Add
-    internal void AddAsk(string input)
-    {
-        Messages.Add(Message.CreateAsk(input));
-    }
-
-    internal void AddAnswer(SKContext result)
-    {
-        Messages.Add(Message.CreateAnswer(SkillsParse.Parse(result.Result).Item2));
-    }
-
-    internal void AddError(SKContext result)
-    {
-        Messages.Add(Message.CreateError(result.LastErrorDescription));
-    }
-
-    internal void AddError(Exception ex)
-    {
-        Messages.Add(Message.CreateError(ex.Message));
-    }
-
-    internal void AddAnswer(string goal)
-    {
-        Messages.Add(Message.CreateAnswer(goal));
-    }
-
     internal void AddHistory(string theNewChatExchange)
     {
         _history += theNewChatExchange;

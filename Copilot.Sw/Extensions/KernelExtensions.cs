@@ -1,11 +1,7 @@
 ﻿using Copilot.Sw.Config;
-using Microsoft.SemanticKernel.Configuration;
 using Microsoft.SemanticKernel;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Copilot.Sw.Extensions;
 
@@ -21,18 +17,18 @@ public static class KernelExtensions
         }
 
         kernelConfig.RemoveAllTextCompletionServices();
-        kernelConfig.RemoveAllTextEmbeddingServices();
+        kernelConfig.RemoveAllTextEmbeddingGenerationServices();
         foreach (var config in configs)
         {
             if (config.Type == ServerType.OpenAI)
             {
-                kernelConfig.AddOpenAITextCompletion(
+                kernelConfig.AddOpenAITextCompletionService(
                     config.Name,                       // alias used in the prompt templates' config.json
                     config.Model,                     // OpenAI Model Name
                     config.Apikey,            // OpenAI API key
                     config.Org
                     );
-                kernelConfig.AddOpenAIEmbeddingGeneration(
+                kernelConfig.AddOpenAIEmbeddingGenerationService(
                     config.Name,
                     "text-embedding-ada-002",
                     config.Apikey,
@@ -41,7 +37,7 @@ public static class KernelExtensions
             }
             else if (config.Type == ServerType.Azure)
             {
-                kernelConfig.AddAzureOpenAITextCompletion(
+                kernelConfig.AddAzureOpenAITextCompletionService(
                     config.Name,
                     config.Model,
                     config.Apikey,

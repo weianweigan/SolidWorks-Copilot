@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.KernelExtensions;
-using Microsoft.SemanticKernel.Configuration;
 using Copilot.Sw.Config;
 using Copilot.Sw.Skills;
 
@@ -21,7 +20,7 @@ public class KernelTests
             Assert.Fail("Config your Api key");
         }
 
-        kernel.Config.AddOpenAITextCompletion(
+        kernel.Config.AddOpenAITextCompletionService(
             config.Name, 
             config.Model,
             config.Apikey, 

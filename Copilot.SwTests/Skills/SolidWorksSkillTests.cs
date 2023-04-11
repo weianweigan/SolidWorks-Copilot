@@ -25,8 +25,9 @@ public class SolidWorksPlanSkillTests : SkillTestbase
     public async Task TaskTest()
     {
         var skContext = await Kernel.RunAsync(
-            "绘制三个圆形",
-            GetChatWithSwFunc());
+            "草图中绘制三个圆形",GetChatWithSwFunc());
+
+        var plan = skContext.Variables.ToPlan();
 
         Assert.IsTrue(skContext.Result.Contains("Nothing"));
     }
@@ -37,7 +38,7 @@ public class SolidWorksPlanSkillTests : SkillTestbase
         var skillProvider = new SkillsProvider(dir);
 
         var swPlanSkill = new SolidWorksPlanSkill(Kernel, skillProvider);
-        var skill = Kernel.ImportSkill(swPlanSkill);
+        var skill = Kernel.ImportSkill(swPlanSkill, SolidWorksPlanSkill.Parameters.ChatWithSolidWorks);
 
         var chatFunc = skill[SolidWorksPlanSkill.Parameters.ChatWithSolidWorks];
         return chatFunc;

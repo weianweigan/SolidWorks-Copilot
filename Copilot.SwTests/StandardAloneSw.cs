@@ -3,7 +3,6 @@ using Copilot.Sw.Config;
 using Copilot.Sw.Skills;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SolidWorks.Interop.sldworks;
 using System.Diagnostics;
@@ -46,7 +45,7 @@ public class StandandAloneSw : IAddin
             Assert.Fail("Config your Api key");
         }
 
-        kernel.Config.AddOpenAITextCompletion(
+        kernel.Config.AddOpenAITextCompletionService(
             config.Name,
             config.Model,
             config.Apikey,

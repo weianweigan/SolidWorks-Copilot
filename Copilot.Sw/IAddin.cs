@@ -18,4 +18,6 @@ public interface IAddin
     IServiceProvider Services { get; }
 
     ISldWorks Sw { get; }
+
+    nint SwHandle { get; }
 }

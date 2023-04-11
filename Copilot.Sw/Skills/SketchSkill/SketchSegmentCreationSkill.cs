@@ -6,6 +6,13 @@ namespace Copilot.Sw.Skills.SketchSkill;
 
 public class SketchSegmentCreationSkill
 {
+    [SKFunction("Draw or create some sketch segment is solidworks sketch,such as line,arc,and other segment.")]
+    [SKFunctionName("SketchSkill")]
+    public void SketchLevelPlan(string goal)
+    {
+
+    }
+
     [SKFunction("CreateCircle")]
     [SKFunctionName("CreateCircle")]
     public void CreateCircle(string postion)

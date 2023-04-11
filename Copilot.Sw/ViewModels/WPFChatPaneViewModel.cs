@@ -5,20 +5,16 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using System;
 using System.Threading.Tasks;
-using Microsoft.SemanticKernel.Configuration;
 using System.Threading;
-using Microsoft.SemanticKernel.KernelExtensions;
 using System.Linq;
 using Copilot.Sw.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using Copilot.Sw.Config;
-using MvvmDialogs;
 using Copilot.Sw.Skills;
 using System.Collections.Generic;
 using Microsoft.SemanticKernel.Memory;
 using Copilot.Sw.Extensions;
-using Microsoft.SemanticKernel.CoreSkills;
 
 namespace Copilot.Sw.ViewModels;
 
@@ -63,6 +59,8 @@ public partial class WPFChatPaneViewModel : ObservableObject
 
     public List<LocalSemanticFunctionModel> Skills { get; set; }
 
+    public LocalSemanticFunctionModel SelectedSkill { get; set; }
+
     public Conversation Conversation { get; set; } = new();
 
     public IKernel? Kernel { get; private set; }
@@ -96,7 +94,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
             .WithMemoryStorage(new VolatileMemoryStore())
             .Build();
 
-        _configLoadResult = Kernel.Config.AllTextCompletionServices?.Any() == true;
+        _configLoadResult = Kernel.Config.TextCompletionServices?.Any() == true;
     }
     #endregion
 
@@ -134,70 +132,37 @@ public partial class WPFChatPaneViewModel : ObservableObject
 
     private bool CanSend() => !string.IsNullOrEmpty(Question);
 
-    private async Task SendAsync(CancellationToken cancellationToken)
+    protected virtual async Task SendAsync(CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(_question))
+        if (string.IsNullOrWhiteSpace(_question) || 
+            Kernel == null)
         {
             return;
         }
 
+        OnPropertyChanged(nameof(HasItem));
+        
         try
         {
+
             //check config
             if (!_configLoadResult)
             {
                 OpenSettings();
             }
 
-            //copy question
-            var question = _question;
-            Conversation.Variables.Set("input", question);
+            await Conversation.ChatAsync(
+                Kernel,
+                _skillsProvider,
+                _question,
+                cancellationToken);
 
             //clear
             Question = "";
-
-            //record question
-            Conversation.AddAsk(question);
-
-            //hidden shortitem
-            OnPropertyChanged(nameof(HasItem));
-
-            var plan = new SolidWorksPlanSkill(Kernel,_skillsProvider);            
-            var skills = Kernel.ImportSkill(plan);
-
-            //send
-            var result = await Kernel.RunAsync(
-                Conversation.Variables,
-                cancellationToken: cancellationToken,
-                skills[SolidWorksPlanSkill.Parameters.ChatWithSolidWorks]
-                );
-
-            //check error
-            if (result.ErrorOccurred)
-            {
-                Conversation.AddError(result);
-                return;
-            }
-
-            //update history
-            var theNewChatExchange = $"Me: {question}\nAI:{result}\n";
-            Conversation.AddHistory(theNewChatExchange);
-
-            if (result.Variables.Get("Plan",out var planValue)
-                && SwPlanModel.TryParse(planValue,out var planModel))
-            {
-                var actionMessage = new ActionAnswerMessage(planModel);
-                Conversation.Messages.Add(actionMessage);
-            }
-            else
-            {
-                //response
-                Conversation.AddAnswer(result);
-            }
         }
         catch (Exception ex)
         {
-            Conversation.AddError(ex);
+            Conversation.Messages.Add(Message.CreateError(ex.Message));
         }
         finally
         {
