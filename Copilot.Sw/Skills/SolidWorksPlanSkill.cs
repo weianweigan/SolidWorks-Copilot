@@ -106,15 +106,12 @@ public class SolidWorksPlanSkill
             //Use Semantic Kernel Plan skill
             //var plan = await _taskPlanFunc.InvokeAsync(input);
             //plan.Variables.Set("Plan", plan.Result);
-            _kernel.ImportSkill(new DocumentCreatationSkill(),nameof(DocumentCreatationSkill.SolidWorksLevelPlan));
-            _kernel.ImportSkill(new SketchSegmentCreationSkill(), nameof(SketchSegmentCreationSkill.SketchLevelPlan));
-
             var planner = new PlannerSkill(_kernel);
 
             //set parameter
             context.Variables.Set(PlannerSkill.Parameters.MaxRelevantFunctions, "5");
-            context.Variables.Set(PlannerSkill.Parameters.IncludedFunctions, $"{nameof(DocumentCreatationSkill.SolidWorksLevelPlan)},{nameof(SketchSegmentCreationSkill.SketchLevelPlan)}");  
-            
+            context.Variables.Set(PlannerSkill.Parameters.ExcludedFunctions, $"ChatOrTask,SolidWorksTaskPlan,Chat");
+
             _kernel.ImportSkill(planner);
             return await planner.CreatePlanAsync(input, context);
         }
@@ -123,51 +120,6 @@ public class SolidWorksPlanSkill
             var chatResult = await _chatFunc.InvokeAsync(input, context);
             return chatResult;
         }
-    }
-
-    public static SwContext GetSwCurrentContext()
-    {
-        var addin = Ioc.Default.GetService<IAddin>();
-
-        var doc = addin.Sw.IActiveDoc2;
-
-        if (doc == null)
-        {
-            return SwContext.SolidWorks;
-        }
-
-        var ske = doc.SketchManager.ActiveSketch;
-        if (ske != null)
-        {
-            return SwContext.Sketch;
-        }
-
-        var type = (swDocumentTypes_e)doc.GetType();
-        if (type == swDocumentTypes_e.swDocASSEMBLY)
-        {
-            return SwContext.Assembly;
-        }else if(type == swDocumentTypes_e.swDocDRAWING)
-        {
-            return SwContext.Drawing;
-        }else if(type == swDocumentTypes_e.swDocPART)
-        {
-            return SwContext.Part;
-        }
-
-        return SwContext.UnKnown;
-    }
+    }    
     #endregion
-}
-
-/// <summary>
-/// SolidWorks Current Context
-/// </summary>
-public enum SwContext
-{
-    UnKnown,
-    SolidWorks,
-    Part,
-    Assembly,
-    Drawing,
-    Sketch,
 }

@@ -1,0 +1,7 @@
+{
+  "Name": "SolidWorks",
+  "SwWorkingContext": "SolidWorks",
+  "Rule": "Create SolidWorks document inclued part,assembly or drawing.Modify solidworks settings",
+  "Samples": [
+  ]
+}

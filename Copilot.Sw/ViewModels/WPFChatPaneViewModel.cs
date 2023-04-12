@@ -26,8 +26,8 @@ public partial class WPFChatPaneViewModel : ObservableObject
     private readonly ILogger? _logger;
     private readonly IAddin _addin;
     private readonly ITextCompletionProvider _textCompletionProvider;
-    private readonly ISkillsProvider _skillsProvider;
-    private bool _configLoadResult;
+    protected readonly ISkillsProvider _skillsProvider;
+    protected bool _configLoadResult;
     private LocalSemanticFunctionModel _selectedSkill;
     #endregion
 
@@ -106,7 +106,7 @@ public partial class WPFChatPaneViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings()
+    protected void OpenSettings()
     {
         try
         {
