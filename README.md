@@ -37,3 +37,9 @@ SolidWorks has different operational contexts, and in order for LLM to better pa
 [MasterGo](https://mastergo.com/goto/pBSvsRy9?file=90150584484334)
 
 # Next
+
+> Try to use other pretrained model
+
+Add the constraints - [SketchGraphs](https://github.com/PrincetonLIPS/SketchGraphs)
+
+Add the mates between components - [JoinABLe](https://github.com/AutodeskAILab/JoinABLe)
