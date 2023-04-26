@@ -4,6 +4,7 @@ using Copilot.Sw.Skills.SolidWorksSkill;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.CoreSkills;
 using Microsoft.SemanticKernel.Orchestration;
+using Microsoft.SemanticKernel.Planning.Planners;
 using Microsoft.SemanticKernel.SkillDefinition;
 using SolidWorks.Interop.swconst;
 using System;
@@ -106,14 +107,12 @@ public class SolidWorksPlanSkill
             //Use Semantic Kernel Plan skill
             //var plan = await _taskPlanFunc.InvokeAsync(input);
             //plan.Variables.Set("Plan", plan.Result);
-            var planner = new PlannerSkill(_kernel);
-
-            //set parameter
-            context.Variables.Set(PlannerSkill.Parameters.MaxRelevantFunctions, "5");
-            context.Variables.Set(PlannerSkill.Parameters.ExcludedFunctions, $"ChatOrTask,SolidWorksTaskPlan,Chat");
+            var planner = new SequentialPlanner(_kernel);
 
             _kernel.ImportSkill(planner);
-            return await planner.CreatePlanAsync(input, context);
+            var plan = await planner.CreatePlanAsync(input);
+            
+            return context;
         }
         else
         {           

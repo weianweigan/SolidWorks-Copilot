@@ -28,7 +28,7 @@ public static class KernelExtensions
                     config.Apikey,            // OpenAI API key
                     config.Org
                     );
-                kernelConfig.AddOpenAIEmbeddingGenerationService(
+                kernelConfig.AddOpenAITextEmbeddingGenerationService(
                     config.Name,
                     "text-embedding-ada-002",
                     config.Apikey,
@@ -37,7 +37,7 @@ public static class KernelExtensions
             }
             else if (config.Type == ServerType.Azure)
             {
-                kernelConfig.AddAzureOpenAITextCompletionService(
+                kernelConfig.AddAzureTextCompletionService(
                     config.Name,
                     config.Model,
                     config.Apikey,
